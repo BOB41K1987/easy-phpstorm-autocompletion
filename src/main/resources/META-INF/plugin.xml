@@ -1,0 +1,23 @@
+<idea-plugin>
+    <id>com.eonx.eeh.translation-nav</id>
+    <name>EasyErrorHandler Translation Navigation</name>
+    <version>1.0.0</version>
+    <vendor>EonX</vendor>
+
+    <description><![CDATA[
+        Adds Go to Declaration (Cmd/Ctrl+B, Cmd/Ctrl+Click) from EasyErrorHandler
+        exception message keys to their definition in <code>translations/messages*.php</code>.
+        <br/>
+        Works for the message key passed to a <code>BaseException</code> subclass
+        constructor (<code>exceptions.*</code>) and to <code>setUserMessage()</code>
+        (<code>user_messages.*</code>).
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.jetbrains.php</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <gotoDeclarationHandler
+            implementation="com.eonx.eeh.translationnav.ExceptionTranslationKeyGotoHandler"/>
+    </extensions>
+</idea-plugin>
