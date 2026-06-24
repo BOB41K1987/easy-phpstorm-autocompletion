@@ -40,6 +40,31 @@ object TranslationKeyResolver {
         return targets
     }
 
+    /** Every dotted key defined across the project's `messages*.php` translation files. */
+    fun collectKeys(project: Project): Set<String> {
+        val keys = sortedSetOf<String>()
+        val psiManager = PsiManager.getInstance(project)
+
+        for (file in findMessageFiles(project)) {
+            val phpFile = psiManager.findFile(file) as? PhpFile ?: continue
+            val rootArray = findReturnedArray(phpFile) ?: continue
+            collectKeys(rootArray, "", keys)
+        }
+
+        return keys
+    }
+
+    private fun collectKeys(array: ArrayCreationExpression, prefix: String, out: MutableSet<String>) {
+        for (hash in array.hashElements) {
+            val keyText = keyText(hash) ?: continue
+            val full = if (prefix.isEmpty()) keyText else "$prefix.$keyText"
+            when (val value = hash.value) {
+                is ArrayCreationExpression -> collectKeys(value, full, out)
+                else -> out.add(full)
+            }
+        }
+    }
+
     private fun findMessageFiles(project: Project): List<VirtualFile> {
         val result = mutableListOf<VirtualFile>()
 
