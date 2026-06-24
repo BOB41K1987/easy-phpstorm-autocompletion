@@ -14,6 +14,13 @@ jumps to the matching leaf (nested arrays and flat dotted keys are both supporte
 No generated metadata is involved, so completion never goes stale. Depends only on the
 bundled PHP plugin — the Symfony plugin is **not** required.
 
+It also autocompletes **Zenstruck Foundry factory attribute keys**: inside the array
+passed to `new(...)`, `with(...)`, `createEntity(...)`, `makeEntity(...)`, `create(...)`,
+`createOne(...)`, `createMany(...)`, `createEntityList(...)`, it offers the property names
+of the entity the factory builds. The entity is resolved from the factory's
+`class()` method, and its properties (including inherited ones) are walked from PSI —
+e.g. `DisputeFactory::new()->createEntity(['<caret>'])` lists `Dispute`'s properties.
+
 ## Build
 
 Requires JDK 17+ and Gradle (the build downloads the PhpStorm SDK on first run).
