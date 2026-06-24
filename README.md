@@ -1,17 +1,18 @@
 # EasyErrorHandler Translation Navigation (PhpStorm plugin)
 
-Adds **Go to Declaration** (`Cmd/Ctrl+B`, `Cmd/Ctrl+Click`) from an EasyErrorHandler
-exception message key to its definition in `translations/messages*.php`.
+Adds **autocompletion** and **Go to Declaration** (`Cmd/Ctrl+B`, `Cmd/Ctrl+Click`) for
+EasyErrorHandler exception message keys, resolved live from `translations/messages*.php`.
 
 Triggers on the first argument of:
 
 - `new <Exception>(...)` / `parent::__construct(...)` → `exceptions.*` keys
 - `->setUserMessage(...)` → `user_messages.*` keys
 
-The plugin resolves the key by walking the returned array PSI of every
-`translations/messages*.php` file under the project content roots (nested arrays and
-flat dotted keys are both supported). It depends only on the bundled PHP plugin — the
-Symfony plugin is **not** required.
+The plugin reads the returned-array PSI of every `translations/messages*.php` file under
+the project content roots — completion lists keys under the relevant prefix; navigation
+jumps to the matching leaf (nested arrays and flat dotted keys are both supported).
+No generated metadata is involved, so completion never goes stale. Depends only on the
+bundled PHP plugin — the Symfony plugin is **not** required.
 
 ## Build
 
@@ -32,7 +33,7 @@ Build against a specific PhpStorm version:
 ## Install
 
 PhpStorm → **Settings → Plugins → ⚙ → Install Plugin from Disk…** →
-select `build/distributions/phpstorm-eeh-translation-nav-1.0.0.zip` → restart.
+select `build/distributions/phpstorm-eeh-translation-nav-1.1.0.zip` → restart.
 
 ## Live development
 
