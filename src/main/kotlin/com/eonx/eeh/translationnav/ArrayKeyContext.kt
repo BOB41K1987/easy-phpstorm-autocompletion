@@ -37,11 +37,14 @@ object ArrayKeyContext {
         return value == null || !PsiTreeUtil.isAncestor(value, literal, false)
     }
 
-    fun existingKeys(array: ArrayCreationExpression): Set<String> =
-        array.hashElements
+    fun existingKeys(array: ArrayCreationExpression): Set<String> {
+        val fromPsi = array.hashElements
             .mapNotNull { (it.key as? StringLiteralExpression)?.contents }
             .filterNot { it.contains(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED) }
-            .toSet()
+        // Union with a text scan: while a new key is typed at the start of the array the missing
+        // comma breaks the parse and the trailing entries vanish from the PSI tree (but not the text).
+        return (fromPsi + scanTopLevel(array).first).toSet()
+    }
 
     /** True when [literal] is a value (not a key) inside [array]. */
     fun isValuePosition(literal: StringLiteralExpression, array: ArrayCreationExpression): Boolean {
@@ -58,11 +61,59 @@ object ArrayKeyContext {
     }
 
     /** String values currently present in [array] (excluding the one being typed). */
-    fun stringValues(array: ArrayCreationExpression): Set<String> =
-        PsiTreeUtil.findChildrenOfType(array, StringLiteralExpression::class.java)
+    fun stringValues(array: ArrayCreationExpression): Set<String> {
+        val fromPsi = PsiTreeUtil.findChildrenOfType(array, StringLiteralExpression::class.java)
             .map { it.contents }
             .filterNot { it.contains(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED) }
-            .toSet()
+        return (fromPsi + scanTopLevel(array).second).toSet()
+    }
+
+    /**
+     * Scans the array's source text from its opening bracket, returning its top-level
+     * (keys, listValues) — robust to the transient parse breakage that occurs while a new
+     * element is typed before an existing one without a separating comma.
+     */
+    private fun scanTopLevel(array: ArrayCreationExpression): Pair<Set<String>, Set<String>> {
+        val text = array.containingFile.text
+        val keys = linkedSetOf<String>()
+        val values = linkedSetOf<String>()
+
+        var i = array.textRange.startOffset
+        while (i < text.length && text[i] != '[') i++
+        if (i >= text.length) return keys to values
+        i++ // past '['
+
+        var depth = 1
+        while (i < text.length && depth > 0) {
+            when (val c = text[i]) {
+                '\'', '"' -> {
+                    i++
+                    val content = StringBuilder()
+                    while (i < text.length && text[i] != c) {
+                        if (text[i] == '\\' && i + 1 < text.length) {
+                            content.append(text[i + 1]); i += 2
+                        } else {
+                            content.append(text[i]); i++
+                        }
+                    }
+                    i++ // past closing quote
+                    if (depth == 1) {
+                        var j = i
+                        while (j < text.length && text[j].isWhitespace()) j++
+                        val isKey = j + 1 < text.length && text[j] == '=' && text[j + 1] == '>'
+                        (if (isKey) keys else values).add(content.toString())
+                    }
+                }
+                '[', '(', '{' -> { depth++; i++ }
+                ']', ')', '}' -> { depth--; i++ }
+                else -> i++
+            }
+        }
+
+        keys.removeAll { it.contains(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED) }
+        values.removeAll { it.contains(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED) }
+        return keys to values
+    }
 
     /** Text typed before the caret, used as the completion prefix matcher. */
     fun typedPrefix(literal: StringLiteralExpression): String =
