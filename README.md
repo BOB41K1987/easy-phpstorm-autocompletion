@@ -33,6 +33,11 @@ of the entity the factory builds. The entity is resolved from the factory's
 e.g. `DisputeFactory::new()->createEntity(['<caret>'])` lists `Dispute`'s properties. The
 same keys are offered inside the array returned by the factory's own `defaults()` method.
 
+It autocompletes **`setMessageParams` / `setUserMessageParams` keys** with the ICU placeholders
+(`{name}`) declared in the corresponding message — the constructor message for `setMessageParams`,
+the `setUserMessage(...)` message for `setUserMessageParams` — and **underlines the message key in
+yellow** when it declares placeholders not provided in the matching params call.
+
 And it autocompletes **EntityExpectation `$criteria` keys**: inside the criteria array of
 `toBeInDb(...)`, `toNotBeInDb(...)`, `toHaveCountInDb(int, ...)`, it offers the properties of
 the entity asserted via `assertEntity(Entity::class)` at the head of the chain — e.g.

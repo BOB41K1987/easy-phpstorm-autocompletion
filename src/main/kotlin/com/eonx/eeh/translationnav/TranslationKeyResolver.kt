@@ -39,6 +39,25 @@ object TranslationKeyResolver {
         return targets
     }
 
+    /** The translation value text for [key] (e.g. an ICU message), or null if not found. */
+    fun messageText(project: Project, key: String, domain: String = "messages"): String? {
+        if (key.isBlank()) return null
+
+        val segments = key.split(".")
+        val psiManager = PsiManager.getInstance(project)
+
+        for (file in findDomainFiles(project, domain)) {
+            val phpFile = psiManager.findFile(file) as? PhpFile ?: continue
+            val rootArray = findReturnedArray(phpFile) ?: continue
+            val leafKey = findLeaf(rootArray, segments) ?: continue
+            // The key element is wrapped in an intermediate PSI node, so walk up to the hash element.
+            val hash = PsiTreeUtil.getParentOfType(leafKey, ArrayHashElement::class.java) ?: continue
+            (hash.value as? StringLiteralExpression)?.let { return it.contents }
+        }
+
+        return null
+    }
+
     /** Every dotted key defined across the project's `<domain>*.php` translation files. */
     fun collectKeys(project: Project, domain: String = "messages"): Set<String> {
         val keys = sortedSetOf<String>()
