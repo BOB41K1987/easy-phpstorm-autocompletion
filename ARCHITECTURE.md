@@ -51,6 +51,10 @@ Shared helpers (reuse these — most features are thin glue over them):
   `messageText` (the value text, for placeholder extraction).
 - **MessageKeyContext** — `requiredPrefix(literal)`: `exceptions.` for a `new`/`__construct` arg0,
   `user_messages.` for a `setUserMessage` arg0, else null.
+- **EntityKeyContext** — `entityClasses(array, project)`: single source of truth resolving the
+  entity whose fields are the valid keys for an attribute/criteria array, across all three call
+  shapes (factory calls + `defaults()`, EntityExpectation chains, DatabaseEntityTrait helpers).
+  Used by both the attribute-key completion and the field goto handler.
 - **EntityExpectationContext** — walks an `assertEntity(Entity::class)->…` chain to its entity.
 - **ExceptionMessageParamsContext** — pairs `setMessageParams`/`setUserMessageParams` with the
   constructor / setUserMessage message; extracts ICU `{placeholder}` names.
@@ -62,9 +66,9 @@ Features (each registered in plugin.xml):
 | Area | Classes |
 |-|-|
 | Exception message keys (`exceptions.*`/`user_messages.*`) | ExceptionTranslationKeyCompletionContributor, ExceptionTranslationKeyGotoHandler |
-| Foundry factory attribute keys (calls + `defaults()`) | FactoryAttributeKeyCompletionContributor, FactoryEntityResolver |
-| EntityExpectation `assertEntity(...)->toBeInDb([...])` | EntityCriteriaKeyCompletionContributor (criteria keys), EntityCriteriaListValueCompletionContributor (jsonAttributes values), EntityCriteriaJsonbAnnotator (+ AddJsonAttributeQuickFix) |
-| DatabaseEntityTrait helpers (`assertEntityExists`/`getEntity`/… entity = arg0) | RepositoryCriteriaKeyCompletionContributor; list values reuse EntityCriteriaListValueCompletionContributor's spec map |
+| Entity attribute/criteria **keys** — factory attrs & `defaults()`, EntityExpectation criteria, DatabaseEntityTrait helpers | EntityAttributeKeyCompletionContributor (completion) + EntityFieldGotoHandler (Cmd+B → entity field), both over EntityKeyContext; FactoryEntityResolver |
+| EntityExpectation / DatabaseEntityTrait jsonAttributes list **values** | EntityCriteriaListValueCompletionContributor (its own spec map) |
+| EntityExpectation JSONB consistency | EntityCriteriaJsonbAnnotator (+ AddJsonAttributeQuickFix) |
 | Constraint attribute `message` (validators domain) | ConstraintMessageGotoHandler (completion intentionally NOT added — Symfony plugin provides it) |
 | Message placeholders | ExceptionMessageParamsCompletionContributor, ExceptionMessageParamsAnnotator (+ AddMessageParamsQuickFix) |
 

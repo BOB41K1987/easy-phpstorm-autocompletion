@@ -32,6 +32,17 @@ object PhpEntityUtil {
     /** Property names declared on [entity] and all of its ancestors (constants excluded). */
     fun propertiesOf(entity: PhpClass): Set<String> = collectFields(entity) { true }
 
+    /** The field named [name] on [entity] or an ancestor (constants excluded), or null. */
+    fun findField(entity: PhpClass, name: String): Field? {
+        val visited = mutableSetOf<String>()
+        var current: PhpClass? = entity
+        while (current != null && visited.add(current.fqn)) {
+            current.fields.firstOrNull { !it.isConstant && it.name == name }?.let { return it }
+            current = current.superClass
+        }
+        return null
+    }
+
     /** Property names whose `#[ORM\Column]` maps to the JSONB Doctrine type. */
     fun jsonbProperties(entity: PhpClass): Set<String> = collectFields(entity) { isJsonbColumn(it) }
 

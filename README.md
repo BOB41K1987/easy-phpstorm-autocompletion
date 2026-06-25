@@ -33,6 +33,10 @@ of the entity the factory builds. The entity is resolved from the factory's
 e.g. `DisputeFactory::new()->createEntity(['<caret>'])` lists `Dispute`'s properties. The
 same keys are offered inside the array returned by the factory's own `defaults()` method.
 
+Every such attribute/criteria array key also supports **Go to Declaration** (`Cmd/Ctrl+B`):
+clicking a key (in factory attributes/`defaults()`, EntityExpectation criteria, or
+DatabaseEntityTrait criteria) jumps to the corresponding entity field.
+
 It autocompletes **`setMessageParams` / `setUserMessageParams` keys** with the ICU placeholders
 (`{name}`) declared in the corresponding message — the constructor message for `setMessageParams`,
 the `setUserMessage(...)` message for `setUserMessageParams` — and **underlines the message key in

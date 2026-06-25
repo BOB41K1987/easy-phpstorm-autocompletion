@@ -8,25 +8,14 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.util.ProcessingContext
-import com.jetbrains.php.lang.psi.elements.MethodReference
-import com.jetbrains.php.lang.psi.elements.ParameterList
 import com.jetbrains.php.lang.psi.elements.StringLiteralExpression
 
 /**
- * Autocompletes the `$criteria` array keys of EntityExpectation assertions with the property
- * names of the entity asserted via `assertEntity(Entity::class)`, e.g.
- * `$this->assertEntity(EventLog::class)->toBeInDb(['<caret>' => ...])`.
+ * Autocompletes entity attribute/criteria array keys with the entity's property names, across all
+ * supported call shapes (resolution lives in [EntityKeyContext]): Foundry factory attributes &
+ * `defaults()`, EntityExpectation `toBeInDb`/…, and DatabaseEntityTrait helpers.
  */
-class EntityCriteriaKeyCompletionContributor : CompletionContributor() {
-
-    private companion object {
-        /** Method name -> index of its `$criteria` array parameter. */
-        val CRITERIA_PARAMETER_INDEX = mapOf(
-            "toBeInDb" to 0,
-            "toNotBeInDb" to 0,
-            "toHaveCountInDb" to 1,
-        )
-    }
+class EntityAttributeKeyCompletionContributor : CompletionContributor() {
 
     init {
         extend(
@@ -42,13 +31,9 @@ class EntityCriteriaKeyCompletionContributor : CompletionContributor() {
                     val array = ArrayKeyContext.enclosingArray(literal) ?: return
                     if (!ArrayKeyContext.isKeyPosition(literal, array)) return
 
-                    val parameterList = array.parent as? ParameterList ?: return
-                    val call = parameterList.parent as? MethodReference ?: return
-                    val criteriaIndex = CRITERIA_PARAMETER_INDEX[call.name] ?: return
-                    if (parameterList.parameters.indexOf(array) != criteriaIndex) return
-
-                    val entity = EntityExpectationContext.resolveAssertedEntity(call, literal.project) ?: return
-                    val names = PhpEntityUtil.propertiesOf(entity)
+                    val names = EntityKeyContext.entityClasses(array, literal.project)
+                        .flatMap { PhpEntityUtil.propertiesOf(it) }
+                        .toSet()
                     if (names.isEmpty()) return
 
                     val existing = ArrayKeyContext.existingKeys(array)
@@ -59,7 +44,7 @@ class EntityCriteriaKeyCompletionContributor : CompletionContributor() {
                         resultSet.addElement(
                             LookupElementBuilder.create(name)
                                 .withIcon(PluginIcons.EONX)
-                                .withTypeText("criteria")
+                                .withTypeText("attribute")
                                 .withInsertHandler(ArrayKeyContext.APPEND_ARROW),
                         )
                     }
