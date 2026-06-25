@@ -87,4 +87,37 @@ class ExceptionMessageParamsTest : BasePlatformTestCase() {
 
         assertTrue(result.toString(), result.any { it.contains("setUserMessageParams") && it.contains("ticketId") })
     }
+
+    private fun applyQuickFix(body: String, methodName: String): String {
+        myFixture.configureByText("E.php", source(body))
+        val fix = myFixture.availableIntentions.firstOrNull { it.text.contains(methodName) }
+            ?: error("quick-fix for $methodName not offered")
+        myFixture.launchAction(fix)
+        return myFixture.file.text
+    }
+
+    fun testQuickFixCreatesSetMessageParamsCall() {
+        val text = applyQuickFix("\$e = new self('exceptions.f<caret>oo', 1);", "setMessageParams")
+
+        assertTrue(text, text.contains("\$e->setMessageParams(['customerBankAccountId' => null, 'amount' => null]);"))
+    }
+
+    fun testQuickFixMergesIntoExistingParams() {
+        val text = applyQuickFix(
+            "\$e = new self('exceptions.f<caret>oo', 1); \$e->setMessageParams(['customerBankAccountId' => 1]);",
+            "setMessageParams",
+        )
+
+        assertTrue(text, text.contains("'amount' => null"))
+        assertTrue(text, text.contains("'customerBankAccountId' => 1")) // existing entry preserved
+    }
+
+    fun testQuickFixCreatesSetUserMessageParamsCall() {
+        val text = applyQuickFix(
+            "\$e = new self('exceptions.foo', 1); \$e->setUserMessage('user_messages.f<caret>oo');",
+            "setUserMessageParams",
+        )
+
+        assertTrue(text, text.contains("\$e->setUserMessageParams(['ticketId' => null]);"))
+    }
 }

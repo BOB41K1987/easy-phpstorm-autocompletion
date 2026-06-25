@@ -6,6 +6,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPointerManager
 import com.intellij.ui.JBColor
 import com.jetbrains.php.lang.psi.elements.StringLiteralExpression
 import java.awt.Font
@@ -46,6 +47,9 @@ class ExceptionMessageParamsAnnotator : Annotator {
         holder.newAnnotation(
             HighlightSeverity.WARNING,
             "Message placeholders not set in $paramsMethod: ${missing.joinToString(", ")}.",
-        ).range(literal).enforcedTextAttributes(YELLOW_UNDERSCORE).create()
+        ).range(literal)
+            .enforcedTextAttributes(YELLOW_UNDERSCORE)
+            .withFix(AddMessageParamsQuickFix(missing.toList(), paramsMethod, SmartPointerManager.createPointer(literal)))
+            .create()
     }
 }

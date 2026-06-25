@@ -36,7 +36,9 @@ same keys are offered inside the array returned by the factory's own `defaults()
 It autocompletes **`setMessageParams` / `setUserMessageParams` keys** with the ICU placeholders
 (`{name}`) declared in the corresponding message — the constructor message for `setMessageParams`,
 the `setUserMessage(...)` message for `setUserMessageParams` — and **underlines the message key in
-yellow** when it declares placeholders not provided in the matching params call.
+yellow** when it declares placeholders not provided in the matching params call, with an
+**Alt+Enter quick-fix** that adds the missing placeholders (merging into an existing params array
+or appending the params call on the exception variable, scaffolding values as `null`).
 
 And it autocompletes **EntityExpectation `$criteria` keys**: inside the criteria array of
 `toBeInDb(...)`, `toNotBeInDb(...)`, `toHaveCountInDb(int, ...)`, it offers the properties of
