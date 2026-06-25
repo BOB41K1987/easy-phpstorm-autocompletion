@@ -24,8 +24,14 @@ class EntityCriteriaListValueCompletionContributor : CompletionContributor() {
 
     private companion object {
         val LIST_SPECS = mapOf(
+            // EntityExpectation chain
             "toBeInDb" to ListSpec(criteriaIndex = 0, listIndices = setOf(1, 2)),
             "toNotBeInDb" to ListSpec(criteriaIndex = 0, listIndices = setOf(1)),
+            // DatabaseEntityTrait helpers (entity is arg 0, criteria arg 1, jsonAttributes arg 2)
+            "assertEntityExists" to ListSpec(criteriaIndex = 1, listIndices = setOf(2)),
+            "assertEntityDoesNotExist" to ListSpec(criteriaIndex = 1, listIndices = setOf(2)),
+            "getEntity" to ListSpec(criteriaIndex = 1, listIndices = setOf(2)),
+            "findOneEntity" to ListSpec(criteriaIndex = 1, listIndices = setOf(2)),
         )
     }
 

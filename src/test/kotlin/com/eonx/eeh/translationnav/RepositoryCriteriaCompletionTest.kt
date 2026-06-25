@@ -69,4 +69,14 @@ class RepositoryCriteriaCompletionTest : BasePlatformTestCase() {
 
         assertDoesntContain(result, "subjectType", "payload")
     }
+
+    fun testJsonAttributesListValuesScopedToCriteriaKeys() {
+        val result = completionsFor(
+            "self::assertEntityExists(\\App\\Common\\Entity\\Foo::class, " +
+                "['action' => 'x', 'payload' => []], ['<caret>']);",
+        )
+
+        assertContainsElements(result, "action", "payload") // only the keys present in the criteria array
+        assertDoesntContain(result, "subjectType") // a real property, but not used in this criteria
+    }
 }
