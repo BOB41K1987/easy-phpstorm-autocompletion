@@ -30,6 +30,12 @@ The trailing `$jsonAttributes` / `$encryptableAttributes` **list values** of `to
 `toNotBeInDb` are completed too, scoped to the keys present in that call's first `$criteria`
 array — e.g. `->toBeInDb(['type' => ..., 'payload' => ...], ['<caret>'])` offers `type`, `payload`.
 
+It also **annotates** `toBeInDb` / `toNotBeInDb` for JSONB consistency:
+
+- a criteria key that maps to an `#[ORM\Column(type: JsonbType::NAME)]` property but is missing
+  from `$jsonAttributes` is highlighted with a yellow background;
+- a `$jsonAttributes` value that is not a key of `$criteria` is underlined in yellow.
+
 ## Build
 
 Requires JDK 17+ and Gradle (the build downloads the PhpStorm SDK on first run).

@@ -1,10 +1,14 @@
 package com.eonx.eeh.translationnav
 
 import com.intellij.openapi.project.Project
+import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.php.PhpIndex
 import com.jetbrains.php.lang.psi.elements.ClassConstantReference
+import com.jetbrains.php.lang.psi.elements.Field
+import com.jetbrains.php.lang.psi.elements.PhpAttributesOwner
 import com.jetbrains.php.lang.psi.elements.PhpClass
 import com.jetbrains.php.lang.psi.elements.PhpTypedElement
+import com.jetbrains.php.lang.psi.elements.StringLiteralExpression
 
 /** Shared PHP-PSI helpers for resolving entity classes and their settable property names. */
 object PhpEntityUtil {
@@ -26,14 +30,19 @@ object PhpEntityUtil {
     }
 
     /** Property names declared on [entity] and all of its ancestors (constants excluded). */
-    fun propertiesOf(entity: PhpClass): Set<String> {
+    fun propertiesOf(entity: PhpClass): Set<String> = collectFields(entity) { true }
+
+    /** Property names whose `#[ORM\Column]` maps to the JSONB Doctrine type. */
+    fun jsonbProperties(entity: PhpClass): Set<String> = collectFields(entity) { isJsonbColumn(it) }
+
+    private fun collectFields(entity: PhpClass, predicate: (Field) -> Boolean): Set<String> {
         val names = linkedSetOf<String>()
         val visited = mutableSetOf<String>()
         var current: PhpClass? = entity
 
         while (current != null && visited.add(current.fqn)) {
             for (field in current.fields) {
-                if (!field.isConstant) {
+                if (!field.isConstant && predicate(field)) {
                     names.add(field.name)
                 }
             }
@@ -41,5 +50,20 @@ object PhpEntityUtil {
         }
 
         return names
+    }
+
+    private fun isJsonbColumn(field: Field): Boolean {
+        val owner = field as? PhpAttributesOwner ?: return false
+        val columnAttributes = owner.attributes.filter { it.fqn == "\\Doctrine\\ORM\\Mapping\\Column" }
+        if (columnAttributes.isEmpty()) return false
+
+        return columnAttributes.any { attribute ->
+            // The type is written as `type: JsonbType::NAME` (a class constant) or the literal 'jsonb'.
+            PsiTreeUtil.findChildrenOfType(attribute, ClassConstantReference::class.java).any { reference ->
+                reference.classReference?.text?.endsWith("JsonbType") == true
+            } || PsiTreeUtil.findChildrenOfType(attribute, StringLiteralExpression::class.java).any {
+                it.contents == "jsonb"
+            }
+        }
     }
 }

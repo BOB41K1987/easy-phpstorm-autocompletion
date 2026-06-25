@@ -6,14 +6,10 @@ import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.openapi.project.Project
 import com.intellij.patterns.PlatformPatterns
-import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
-import com.jetbrains.php.lang.psi.elements.ClassConstantReference
 import com.jetbrains.php.lang.psi.elements.MethodReference
 import com.jetbrains.php.lang.psi.elements.ParameterList
-import com.jetbrains.php.lang.psi.elements.PhpClass
 import com.jetbrains.php.lang.psi.elements.StringLiteralExpression
 
 /**
@@ -51,7 +47,7 @@ class EntityCriteriaKeyCompletionContributor : CompletionContributor() {
                     val criteriaIndex = CRITERIA_PARAMETER_INDEX[call.name] ?: return
                     if (parameterList.parameters.indexOf(array) != criteriaIndex) return
 
-                    val entity = resolveAssertedEntity(call, literal.project) ?: return
+                    val entity = EntityExpectationContext.resolveAssertedEntity(call, literal.project) ?: return
                     val names = PhpEntityUtil.propertiesOf(entity)
                     if (names.isEmpty()) return
 
@@ -69,18 +65,5 @@ class EntityCriteriaKeyCompletionContributor : CompletionContributor() {
                 }
             },
         )
-    }
-
-    /** Walks the call chain to `assertEntity(Entity::class)` and resolves that entity. */
-    private fun resolveAssertedEntity(call: MethodReference, project: Project): PhpClass? {
-        var qualifier: PsiElement? = call.classReference
-        while (qualifier is MethodReference) {
-            if ("assertEntity".equals(qualifier.name, ignoreCase = true)) {
-                val classConstant = qualifier.parameters.firstOrNull() as? ClassConstantReference ?: return null
-                return PhpEntityUtil.resolveClassConstant(classConstant, project)
-            }
-            qualifier = qualifier.classReference
-        }
-        return null
     }
 }
