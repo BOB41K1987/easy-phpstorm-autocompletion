@@ -63,12 +63,31 @@ class EntityCriteriaCompletionTest : BasePlatformTestCase() {
         assertContainsElements(result, "type", "payload", "occurredAt")
     }
 
-    fun testNonCriteriaArrayArgIsNotCompleted() {
-        // The 2nd arg of toBeInDb is the jsonAttributes list, not the criteria — no property keys there.
+    fun testNonCriteriaArrayArgIsNotCompletedWithEntityProperties() {
+        // The 2nd arg of toBeInDb is the jsonAttributes list, not the criteria — no entity-property keys there.
         val result = completionsFor(
             "\$this->assertEntity(\\App\\EventLog\\EventLog::class)->toBeInDb(['type' => 'x'], ['<caret>']);",
         )
 
-        assertDoesntContain(result, "payload", "occurredAt")
+        assertDoesntContain(result, "occurredAt") // not a criteria key here
+    }
+
+    fun testJsonAttributesListValuesScopedToCriteriaKeys() {
+        val result = completionsFor(
+            "\$this->assertEntity(\\App\\EventLog\\EventLog::class)" +
+                "->toBeInDb(['type' => 'x', 'payload' => []], ['<caret>']);",
+        )
+
+        assertContainsElements(result, "type", "payload") // only the keys present in the criteria array
+        assertDoesntContain(result, "occurredAt") // a real property, but not used in this criteria
+    }
+
+    fun testEncryptableListExcludesAlreadyListedValue() {
+        val result = completionsFor(
+            "\$this->assertEntity(\\App\\EventLog\\EventLog::class)" +
+                "->toBeInDb(['type' => 'x', 'payload' => []], ['payload'], ['<caret>']);",
+        )
+
+        assertContainsElements(result, "type", "payload") // 3rd arg (encryptableAttributes) → criteria keys
     }
 }

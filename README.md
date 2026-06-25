@@ -24,8 +24,11 @@ e.g. `DisputeFactory::new()->createEntity(['<caret>'])` lists `Dispute`'s proper
 And it autocompletes **EntityExpectation `$criteria` keys**: inside the criteria array of
 `toBeInDb(...)`, `toNotBeInDb(...)`, `toHaveCountInDb(int, ...)`, it offers the properties of
 the entity asserted via `assertEntity(Entity::class)` at the head of the chain — e.g.
-`$this->assertEntity(EventLog::class)->toBeInDb(['<caret>'])`. Only the criteria array
-parameter is completed (not the trailing `$jsonAttributes` / `$encryptableAttributes` lists).
+`$this->assertEntity(EventLog::class)->toBeInDb(['<caret>'])`.
+
+The trailing `$jsonAttributes` / `$encryptableAttributes` **list values** of `toBeInDb` /
+`toNotBeInDb` are completed too, scoped to the keys present in that call's first `$criteria`
+array — e.g. `->toBeInDb(['type' => ..., 'payload' => ...], ['<caret>'])` offers `type`, `payload`.
 
 ## Build
 

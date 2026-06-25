@@ -43,6 +43,27 @@ object ArrayKeyContext {
             .filterNot { it.contains(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED) }
             .toSet()
 
+    /** True when [literal] is a value (not a key) inside [array]. */
+    fun isValuePosition(literal: StringLiteralExpression, array: ArrayCreationExpression): Boolean {
+        val hash = PsiTreeUtil.getParentOfType(
+            literal,
+            ArrayHashElement::class.java,
+            false,
+            ArrayCreationExpression::class.java,
+        )
+        // No enclosing hash → a bare list element, which is a value.
+        if (hash == null) return true
+        val value = hash.value
+        return value != null && PsiTreeUtil.isAncestor(value, literal, false)
+    }
+
+    /** String values currently present in [array] (excluding the one being typed). */
+    fun stringValues(array: ArrayCreationExpression): Set<String> =
+        PsiTreeUtil.findChildrenOfType(array, StringLiteralExpression::class.java)
+            .map { it.contents }
+            .filterNot { it.contains(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED) }
+            .toSet()
+
     /** Text typed before the caret, used as the completion prefix matcher. */
     fun typedPrefix(literal: StringLiteralExpression): String =
         literal.contents.substringBefore(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED)
