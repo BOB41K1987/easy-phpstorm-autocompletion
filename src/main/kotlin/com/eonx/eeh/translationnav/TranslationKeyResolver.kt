@@ -21,17 +21,16 @@ import com.jetbrains.php.lang.psi.elements.StringLiteralExpression
  */
 object TranslationKeyResolver {
 
-    private val MESSAGE_FILE = Regex("^messages.*\\.php$")
     private val SKIP_DIRS = setOf("vendor", "node_modules", ".git", "var", "cache")
 
-    fun resolve(project: Project, key: String): List<PsiElement> {
+    fun resolve(project: Project, key: String, domain: String = "messages"): List<PsiElement> {
         if (key.isBlank()) return emptyList()
 
         val segments = key.split(".")
         val psiManager = PsiManager.getInstance(project)
         val targets = mutableListOf<PsiElement>()
 
-        for (file in findMessageFiles(project)) {
+        for (file in findDomainFiles(project, domain)) {
             val phpFile = psiManager.findFile(file) as? PhpFile ?: continue
             val rootArray = findReturnedArray(phpFile) ?: continue
             findLeaf(rootArray, segments)?.let { targets.add(it) }
@@ -40,12 +39,12 @@ object TranslationKeyResolver {
         return targets
     }
 
-    /** Every dotted key defined across the project's `messages*.php` translation files. */
-    fun collectKeys(project: Project): Set<String> {
+    /** Every dotted key defined across the project's `<domain>*.php` translation files. */
+    fun collectKeys(project: Project, domain: String = "messages"): Set<String> {
         val keys = sortedSetOf<String>()
         val psiManager = PsiManager.getInstance(project)
 
-        for (file in findMessageFiles(project)) {
+        for (file in findDomainFiles(project, domain)) {
             val phpFile = psiManager.findFile(file) as? PhpFile ?: continue
             val rootArray = findReturnedArray(phpFile) ?: continue
             collectKeys(rootArray, "", keys)
@@ -65,8 +64,9 @@ object TranslationKeyResolver {
         }
     }
 
-    private fun findMessageFiles(project: Project): List<VirtualFile> {
+    private fun findDomainFiles(project: Project, domain: String): List<VirtualFile> {
         val result = mutableListOf<VirtualFile>()
+        val fileName = Regex("^" + Regex.escape(domain) + ".*\\.php$")
 
         for (root in ProjectRootManager.getInstance(project).contentRoots) {
             VfsUtilCore.visitChildrenRecursively(root, object : VirtualFileVisitor<Any>() {
@@ -74,7 +74,7 @@ object TranslationKeyResolver {
                     if (file.isDirectory) {
                         return if (file.name in SKIP_DIRS) SKIP_CHILDREN else CONTINUE
                     }
-                    if (file.parent?.name == "translations" && MESSAGE_FILE.matches(file.name)) {
+                    if (file.parent?.name == "translations" && fileName.matches(file.name)) {
                         result.add(file)
                     }
                     return CONTINUE
