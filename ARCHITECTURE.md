@@ -13,19 +13,29 @@ shape, never by project.
 
 ## Build / test / install (this machine has no JDK by default)
 
-The machine has **no JDK and no Gradle** out of the box. Homebrew's `gradle` pulls JDK 26 + Gradle 9,
-both too new for the IntelliJ Platform Gradle Plugin 2.x. Use **OpenJDK 17** + the pinned Gradle 8.10.2
-wrapper:
+The machine has **no JDK out of the box**. Run every Gradle command under **OpenJDK 17**:
 
 ```bash
-export JAVA_HOME="/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"   # installed via: brew install openjdk@17
+export JAVA_HOME="/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"   # brew install openjdk@17
 ./gradlew test --no-daemon --console=plain        # headless functional tests (the regression guard)
 ./gradlew buildPlugin --no-daemon --console=plain  # -> build/distributions/phpstorm-eeh-translation-nav-<version>.zip
 ```
 
-First `buildPlugin`/`test` downloads the PhpStorm SDK (~1.5 GB, cached after). Build target
-`platformVersion=2024.3.5` (gradle.properties), since-build 241, open upper bound; bytecode is Java 17
-so it loads on PhpStorm 2024.1+.
+Toolchain (must stay coherent — see the version matrix below):
+- **Gradle 9.6** (wrapper) — required by the IntelliJ Platform Gradle Plugin 2.16; runs fine on JDK 17.
+- **IntelliJ Platform Gradle Plugin 2.16.0** — needed to resolve the 2025.3 module-based SDK layout
+  (`lib/modules/*.jar`); 2.1.0 could NOT (failed with "Could not find …/lib/modules/…jar"). 2.16 in turn
+  requires Gradle 9.0+.
+- **Kotlin Gradle plugin 2.2.0** — Gradle-9 compatible (2.0.21 was paired with Gradle 8).
+- **`platformVersion=2025.3.3`** (gradle.properties) — build against the version teammates run.
+- since-build 241, open upper bound; `jvmToolchain(17)` → Java-17 bytecode, loads on PhpStorm 2024.1+.
+
+First `buildPlugin`/`test` downloads the PhpStorm SDK (~1.5 GB, cached after).
+
+**Marketplace compatibility gotcha:** Marketplace derives "compatible builds" from the platform the
+plugin was *compiled against*, not just the open `<idea-version>`. A plugin compiled against 2024.3 was
+flagged "Not compatible with PhpStorm 2025.3" even with an open until-build — fixed by building against
+2025.3.3. So: bump `platformVersion` to the latest your team runs before publishing.
 
 Install: Settings → Plugins → ⚙ → Install Plugin from Disk → the zip → restart.
 

@@ -2,12 +2,12 @@ import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
 plugins {
     id("java")
-    id("org.jetbrains.kotlin.jvm") version "2.0.21"
-    id("org.jetbrains.intellij.platform") version "2.1.0"
+    id("org.jetbrains.kotlin.jvm") version "2.2.0"
+    id("org.jetbrains.intellij.platform") version "2.16.0"
 }
 
 group = "com.eonx"
-version = "1.13.0"
+version = "1.13.1"
 
 repositories {
     mavenCentral()
@@ -21,7 +21,6 @@ dependencies {
         phpstorm(providers.gradleProperty("platformVersion"))
         bundledPlugin("com.jetbrains.php")
         pluginVerifier()
-        instrumentationTools()
         testFramework(TestFrameworkType.Platform)
     }
     testImplementation("junit:junit:4.13.2")
