@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>com.eonx.eeh.translation-nav</id>
     <name>EasyErrorHandler Translation Navigation</name>
-    <version>1.11.0</version>
+    <version>1.12.0</version>
     <vendor>EonX</vendor>
 
     <description><![CDATA[
@@ -40,6 +40,9 @@
         <completion.contributor
             language="PHP"
             implementationClass="com.eonx.eeh.translationnav.ExceptionMessageParamsCompletionContributor"/>
+        <completion.contributor
+            language="PHP"
+            implementationClass="com.eonx.eeh.translationnav.RepositoryCriteriaKeyCompletionContributor"/>
         <annotator
             language="PHP"
             implementationClass="com.eonx.eeh.translationnav.EntityCriteriaJsonbAnnotator"/>

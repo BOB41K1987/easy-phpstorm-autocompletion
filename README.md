@@ -40,6 +40,12 @@ yellow** when it declares placeholders not provided in the matching params call,
 **Alt+Enter quick-fix** that adds the missing placeholders (merging into an existing params array
 or appending the params call on the exception variable, scaffolding values as `null`).
 
+It autocompletes **`DatabaseEntityTrait` criteria keys**: helpers that take the entity class as
+their first argument — `assertEntityExists`, `assertEntityDoesNotExist`, `getEntity`,
+`findOneEntity` (criteria = 2nd arg) and `assertEntityCount` (criteria = 3rd arg) — get their
+criteria array keys completed with the properties of that entity, e.g.
+`self::assertEntityExists(EventLog::class, ['<caret>'])`.
+
 And it autocompletes **EntityExpectation `$criteria` keys**: inside the criteria array of
 `toBeInDb(...)`, `toNotBeInDb(...)`, `toHaveCountInDb(int, ...)`, it offers the properties of
 the entity asserted via `assertEntity(Entity::class)` at the head of the chain — e.g.
