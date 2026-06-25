@@ -14,12 +14,13 @@ jumps to the matching leaf (nested arrays and flat dotted keys are both supporte
 No generated metadata is involved, so completion never goes stale. Depends only on the
 bundled PHP plugin — the Symfony plugin is **not** required.
 
-It also fills a Symfony-plugin gap: **completion and Go to Declaration for constraint
-`message` keys written as attributes** — e.g. `#[Assert\Expression(message: '<caret>')]` — against
-the `validators` domain (`translations/validators*.php`). The Symfony plugin handles the
-`new Assert\…(message: …)` and `trans()` forms but not the attribute form. Applies to any
-argument whose name ends in `message` (`message`, `minMessage`, `maxMessage`, …) on a class
-under `Symfony\Component\Validator\Constraints\` or extending `Validator\Constraint`.
+It also fills a Symfony-plugin gap: **Go to Declaration for constraint `message` keys written
+as attributes** — e.g. `#[Assert\Expression(message: '<caret>')]` — navigating to the
+`validators` domain (`translations/validators*.php`). The Symfony plugin already handles
+completion and goto for the `new Assert\…(message: …)` and `trans()` forms, and completion for
+the attribute form, but not goto for the attribute form. Applies to any argument whose name
+ends in `message` (`message`, `minMessage`, `maxMessage`, …) on a class under
+`Symfony\Component\Validator\Constraints\` or extending `Validator\Constraint`.
 
 It also autocompletes **Zenstruck Foundry factory attribute keys**: inside the array
 passed to `new(...)`, `with(...)`, `createEntity(...)`, `makeEntity(...)`, `create(...)`,

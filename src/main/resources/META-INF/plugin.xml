@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>com.eonx.eeh.translation-nav</id>
     <name>EasyErrorHandler Translation Navigation</name>
-    <version>1.8.0</version>
+    <version>1.8.1</version>
     <vendor>EonX</vendor>
 
     <description><![CDATA[
@@ -25,9 +25,6 @@
             implementation="com.eonx.eeh.translationnav.ExceptionTranslationKeyGotoHandler"/>
         <gotoDeclarationHandler
             implementation="com.eonx.eeh.translationnav.ConstraintMessageGotoHandler"/>
-        <completion.contributor
-            language="PHP"
-            implementationClass="com.eonx.eeh.translationnav.ConstraintMessageCompletionContributor"/>
         <completion.contributor
             language="PHP"
             implementationClass="com.eonx.eeh.translationnav.ExceptionTranslationKeyCompletionContributor"/>
