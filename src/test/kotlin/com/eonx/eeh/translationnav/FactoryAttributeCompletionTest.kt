@@ -85,6 +85,28 @@ class FactoryAttributeCompletionTest : BasePlatformTestCase() {
         assertDoesntContain(result, "reason")
     }
 
+    fun testCompletionsCarryEonxIcon() {
+        val elements = completionElementsFor("\\Test\\Factory\\Dispute\\DisputeFactory::new(['<caret>']);")
+        val statusElement = elements.firstOrNull { it.lookupString == "status" }
+            ?: error("status completion not offered")
+
+        val presentation = com.intellij.codeInsight.lookup.LookupElementPresentation()
+        statusElement.renderElement(presentation)
+
+        assertSame(PluginIcons.EONX, presentation.icon)
+    }
+
+    private fun completionElementsFor(call: String): List<com.intellij.codeInsight.lookup.LookupElement> {
+        myFixture.addFileToProject("support.php", support)
+        val source = """
+            <?php
+            namespace App\Test;
+            class T { public function t(): void { $call } }
+        """.trimIndent()
+        myFixture.configureByText("test_case.php", source)
+        return myFixture.completeBasic()?.toList() ?: emptyList()
+    }
+
     fun testDefaultsMethodReturnArrayKeys() {
         myFixture.addFileToProject("support.php", support)
         val factory = """

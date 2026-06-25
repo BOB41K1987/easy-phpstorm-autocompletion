@@ -39,7 +39,7 @@ class ExceptionTranslationKeyCompletionContributor : CompletionContributor() {
 
                     for (key in TranslationKeyResolver.collectKeys(literal.project)) {
                         if (key.startsWith(prefix)) {
-                            resultSet.addElement(LookupElementBuilder.create(key))
+                            resultSet.addElement(LookupElementBuilder.create(key).withIcon(PluginIcons.EONX))
                         }
                     }
                 }

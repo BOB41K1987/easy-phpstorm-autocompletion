@@ -60,7 +60,9 @@ class EntityCriteriaListValueCompletionContributor : CompletionContributor() {
                     for (candidate in candidates) {
                         if (candidate in alreadyListed) continue
                         resultSet.addElement(
-                            LookupElementBuilder.create(candidate).withTypeText("criteria field"),
+                            LookupElementBuilder.create(candidate)
+                                .withIcon(PluginIcons.EONX)
+                                .withTypeText("criteria field"),
                         )
                     }
                 }

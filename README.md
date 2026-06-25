@@ -1,5 +1,8 @@
 # EasyErrorHandler Translation Navigation (PhpStorm plugin)
 
+Every completion this plugin contributes is marked with an EonX icon, so it's clear which
+suggestions come from here versus PhpStorm/the Symfony plugin.
+
 Adds **autocompletion** and **Go to Declaration** (`Cmd/Ctrl+B`, `Cmd/Ctrl+Click`) for
 EasyErrorHandler exception message keys, resolved live from `translations/messages*.php`.
 

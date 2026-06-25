@@ -58,6 +58,7 @@ class EntityCriteriaKeyCompletionContributor : CompletionContributor() {
                         if (name in existing) continue
                         resultSet.addElement(
                             LookupElementBuilder.create(name)
+                                .withIcon(PluginIcons.EONX)
                                 .withTypeText("criteria")
                                 .withInsertHandler(ArrayKeyContext.APPEND_ARROW),
                         )
