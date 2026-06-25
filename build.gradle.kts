@@ -1,3 +1,5 @@
+import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+
 plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "2.0.21"
@@ -5,7 +7,7 @@ plugins {
 }
 
 group = "com.eonx"
-version = "1.2.0"
+version = "1.2.1"
 
 repositories {
     mavenCentral()
@@ -20,7 +22,13 @@ dependencies {
         bundledPlugin("com.jetbrains.php")
         pluginVerifier()
         instrumentationTools()
+        testFramework(TestFrameworkType.Platform)
     }
+    testImplementation("junit:junit:4.13.2")
+}
+
+tasks.test {
+    useJUnit()
 }
 
 intellijPlatform {

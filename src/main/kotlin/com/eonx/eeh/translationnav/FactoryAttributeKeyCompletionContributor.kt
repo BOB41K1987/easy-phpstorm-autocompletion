@@ -10,6 +10,7 @@ import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.PlatformPatterns
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
 import com.jetbrains.php.lang.psi.elements.ArrayCreationExpression
 import com.jetbrains.php.lang.psi.elements.ArrayHashElement
@@ -60,10 +61,15 @@ class FactoryAttributeKeyCompletionContributor : CompletionContributor() {
                     context: ProcessingContext,
                     result: CompletionResultSet,
                 ) {
-                    val literal = parameters.position.parent as? StringLiteralExpression ?: return
-                    if (!isArrayKeyPosition(literal)) return
+                    val literal = PsiTreeUtil.getParentOfType(
+                        parameters.position,
+                        StringLiteralExpression::class.java,
+                        false,
+                    ) ?: return
 
-                    val array = enclosingArray(literal) ?: return
+                    val array = PsiTreeUtil.getParentOfType(literal, ArrayCreationExpression::class.java) ?: return
+                    if (!isKeyPosition(literal, array)) return
+
                     val call = factoryCall(array) ?: return
                     val qualifier = call.classReference as? PhpTypedElement ?: return
 
@@ -89,19 +95,23 @@ class FactoryAttributeKeyCompletionContributor : CompletionContributor() {
         )
     }
 
-    private fun isArrayKeyPosition(literal: StringLiteralExpression): Boolean =
-        when (val parent = literal.parent) {
-            is ArrayHashElement -> parent.key === literal
-            is ArrayCreationExpression -> true // value-style element with no `=>` yet: a key being typed
-            else -> false
-        }
-
-    private fun enclosingArray(literal: StringLiteralExpression): ArrayCreationExpression? =
-        when (val parent = literal.parent) {
-            is ArrayCreationExpression -> parent
-            is ArrayHashElement -> parent.parent as? ArrayCreationExpression
-            else -> null
-        }
+    /**
+     * True when [literal] is a key (not a value) of [array]. Array elements may be wrapped in an
+     * intermediate PSI node, so the array/hash are located via tree walk rather than direct parent.
+     */
+    private fun isKeyPosition(literal: StringLiteralExpression, array: ArrayCreationExpression): Boolean {
+        val hash = PsiTreeUtil.getParentOfType(
+            literal,
+            ArrayHashElement::class.java,
+            false,
+            ArrayCreationExpression::class.java,
+        )
+        // No enclosing hash before the array → a bare element (no `=>` yet): a key being typed.
+        if (hash == null) return true
+        // Inside a hash → it's a key unless it sits within the value side.
+        val value = hash.value
+        return value == null || !PsiTreeUtil.isAncestor(value, literal, false)
+    }
 
     private fun factoryCall(array: ArrayCreationExpression): MethodReference? {
         val parameterList = array.parent as? ParameterList ?: return null
