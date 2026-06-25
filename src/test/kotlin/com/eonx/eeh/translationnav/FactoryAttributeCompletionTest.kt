@@ -84,4 +84,24 @@ class FactoryAttributeCompletionTest : BasePlatformTestCase() {
 
         assertDoesntContain(result, "reason")
     }
+
+    fun testDefaultsMethodReturnArrayKeys() {
+        myFixture.addFileToProject("support.php", support)
+        val factory = """
+            <?php
+            namespace Test\Factory\Dispute;
+            use Test\Factory\AbstractFactory;
+            class MyDisputeFactory extends AbstractFactory {
+                public static function class(): string { return \App\Dispute\Dispute::class; }
+                protected function defaults(): array {
+                    return ['<caret>'];
+                }
+            }
+        """.trimIndent()
+        myFixture.configureByText("MyDisputeFactory.php", factory)
+        myFixture.completeBasic()
+        val result = myFixture.lookupElementStrings ?: emptyList()
+
+        assertContainsElements(result, "status", "reason", "customer")
+    }
 }

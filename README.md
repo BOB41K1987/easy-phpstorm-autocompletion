@@ -19,7 +19,8 @@ passed to `new(...)`, `with(...)`, `createEntity(...)`, `makeEntity(...)`, `crea
 `createOne(...)`, `createMany(...)`, `createEntityList(...)`, it offers the property names
 of the entity the factory builds. The entity is resolved from the factory's
 `class()` method, and its properties (including inherited ones) are walked from PSI —
-e.g. `DisputeFactory::new()->createEntity(['<caret>'])` lists `Dispute`'s properties.
+e.g. `DisputeFactory::new()->createEntity(['<caret>'])` lists `Dispute`'s properties. The
+same keys are offered inside the array returned by the factory's own `defaults()` method.
 
 And it autocompletes **EntityExpectation `$criteria` keys**: inside the criteria array of
 `toBeInDb(...)`, `toNotBeInDb(...)`, `toHaveCountInDb(int, ...)`, it offers the properties of
