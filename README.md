@@ -33,7 +33,9 @@ array — e.g. `->toBeInDb(['type' => ..., 'payload' => ...], ['<caret>'])` offe
 It also **annotates** `toBeInDb` / `toNotBeInDb` for JSONB consistency:
 
 - a criteria key that maps to an `#[ORM\Column(type: JsonbType::NAME)]` property but is missing
-  from `$jsonAttributes` is highlighted with a yellow background;
+  from `$jsonAttributes` is highlighted with a yellow background, and offers an **Alt+Enter
+  quick-fix** ("Add '…' to $jsonAttributes") that adds the key — creating the `$jsonAttributes`
+  argument if the call doesn't have one;
 - a `$jsonAttributes` value that is not a key of `$criteria` is underlined in yellow.
 
 ## Build

@@ -6,6 +6,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.JBColor
 import com.jetbrains.php.lang.psi.elements.ArrayCreationExpression
@@ -35,6 +36,7 @@ class EntityCriteriaJsonbAnnotator : Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         val call = element as? MethodReference ?: return
         val (criteriaIndex, jsonIndex) = JSON_ATTRIBUTE_SPECS[call.name] ?: return
+        val callPointer by lazy { SmartPointerManager.createPointer(call) }
 
         val parameters = call.parameters
         val criteria = parameters.getOrNull(criteriaIndex) as? ArrayCreationExpression ?: return
@@ -54,7 +56,10 @@ class EntityCriteriaJsonbAnnotator : Annotator {
                 holder.newAnnotation(
                     HighlightSeverity.WARNING,
                     "JSONB property '$key' should be listed in the \$jsonAttributes argument.",
-                ).range(keyElement).enforcedTextAttributes(YELLOW_HIGHLIGHT).create()
+                ).range(keyElement)
+                    .enforcedTextAttributes(YELLOW_HIGHLIGHT)
+                    .withFix(AddJsonAttributeQuickFix(key, callPointer, criteriaIndex, jsonIndex))
+                    .create()
             }
         }
 

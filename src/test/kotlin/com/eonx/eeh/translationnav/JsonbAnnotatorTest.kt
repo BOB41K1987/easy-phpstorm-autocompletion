@@ -85,4 +85,40 @@ class JsonbAnnotatorTest : BasePlatformTestCase() {
 
         assertFalse(warnings.toString(), warnings.any { it.contains("JSONB property 'type'") })
     }
+
+    private fun applyQuickFix(body: String): String {
+        myFixture.addFileToProject("support.php", support)
+        val source = """
+            <?php
+            namespace App\Test;
+            class T {
+                use \Test\Util\DatabaseEntityHelperTrait;
+                public function t(): void {
+                    $body
+                }
+            }
+        """.trimIndent()
+        myFixture.configureByText("test_case.php", source)
+        val fix = myFixture.availableIntentions.firstOrNull { it.text.contains("\$jsonAttributes") }
+            ?: error("quick-fix not offered")
+        myFixture.launchAction(fix)
+        return myFixture.file.text
+    }
+
+    fun testQuickFixCreatesJsonAttributesArgument() {
+        val text = applyQuickFix(
+            "\$this->assertEntity(\\App\\EventLog\\EventLog::class)->toBeInDb(['pay<caret>load' => []]);",
+        )
+
+        assertTrue(text, text.contains("->toBeInDb(['payload' => []], ['payload'])"))
+    }
+
+    fun testQuickFixAppendsToExistingJsonAttributes() {
+        val text = applyQuickFix(
+            "\$this->assertEntity(\\App\\EventLog\\EventLog::class)" +
+                "->toBeInDb(['pay<caret>load' => [], 'type' => 'x'], ['type']);",
+        )
+
+        assertTrue(text, text.contains("['payload', 'type']"))
+    }
 }
