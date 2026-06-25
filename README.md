@@ -21,6 +21,12 @@ of the entity the factory builds. The entity is resolved from the factory's
 `class()` method, and its properties (including inherited ones) are walked from PSI —
 e.g. `DisputeFactory::new()->createEntity(['<caret>'])` lists `Dispute`'s properties.
 
+And it autocompletes **EntityExpectation `$criteria` keys**: inside the criteria array of
+`toBeInDb(...)`, `toNotBeInDb(...)`, `toHaveCountInDb(int, ...)`, it offers the properties of
+the entity asserted via `assertEntity(Entity::class)` at the head of the chain — e.g.
+`$this->assertEntity(EventLog::class)->toBeInDb(['<caret>'])`. Only the criteria array
+parameter is completed (not the trailing `$jsonAttributes` / `$encryptableAttributes` lists).
+
 ## Build
 
 Requires JDK 17+ and Gradle (the build downloads the PhpStorm SDK on first run).
