@@ -135,4 +135,29 @@ object TranslationKeyResolver {
 
     private fun keyText(hash: ArrayHashElement): String? =
         (hash.key as? StringLiteralExpression)?.contents
+
+    /**
+     * The (domain, dotted key) pair for the leaf key element under [element], when it sits on a
+     * translation array key inside a recognized `translations/<domain>*.php` file. Used to drive
+     * the reverse (translation &rarr; usages) navigation.
+     */
+    fun keyAt(element: PsiElement): Pair<String, String>? {
+        val literal = element.parent as? StringLiteralExpression ?: return null
+        val hash = literal.parent as? ArrayHashElement ?: return null
+        if (hash.key !== literal || hash.value is ArrayCreationExpression) return null
+
+        val file = literal.containingFile?.virtualFile ?: return null
+        if (file.parent?.name != "translations") return null
+        val domain = Regex("^([A-Za-z0-9_]+)").find(file.name)?.groupValues?.get(1) ?: return null
+
+        val segments = mutableListOf(keyText(hash) ?: return null)
+        var array = PsiTreeUtil.getParentOfType(hash, ArrayCreationExpression::class.java)
+        while (array != null) {
+            val parentHash = array.parent as? ArrayHashElement ?: break
+            segments.add(0, keyText(parentHash) ?: return null)
+            array = PsiTreeUtil.getParentOfType(parentHash, ArrayCreationExpression::class.java)
+        }
+
+        return domain to segments.joinToString(".")
+    }
 }
