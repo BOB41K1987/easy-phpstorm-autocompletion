@@ -2,6 +2,7 @@ package com.eonx.eeh.translationnav
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -25,6 +26,16 @@ class TranslationKeyUsageTarget(private val target: PsiElement) : FakePsiElement
     override fun isValid(): Boolean = target.isValid
 
     override fun getTextOffset(): Int = target.textOffset
+
+    override fun getTextRange(): TextRange = target.textRange
+
+    override fun getText(): String = target.text
+
+    // Quick Documentation / Ctrl+hover resolve through this to decide what to render, so route
+    // them to the real usage instead of falling back to a debug dump of this synthetic element.
+    override fun getNavigationElement(): PsiElement = target
+
+    override fun getOriginalElement(): PsiElement = target
 
     override fun getPresentableText(): String {
         val file = target.containingFile

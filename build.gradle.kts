@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "com.eonx"
-version = "1.14.4"
+version = "1.14.5"
 
 repositories {
     mavenCentral()

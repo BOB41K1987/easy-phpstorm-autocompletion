@@ -62,6 +62,13 @@ class TranslationKeyUsagesTest : BasePlatformTestCase() {
         assertEquals("Dto.php:5", presentation.presentableText)
         assertEquals("src", presentation.locationString)
         assertSame(PluginIcons.EONX, presentation.getIcon(false))
+
+        // Quick Documentation / Ctrl+hover resolve through these before rendering; if they stay
+        // null (the FakePsiElement default) the IDE falls back to a raw debug dump of this class.
+        assertEquals("'dispute.incorrect_amount.too_big'", targets[0].text)
+        assertNotNull(targets[0].textRange)
+        assertTrue(targets[0].navigationElement.text.contains("dispute.incorrect_amount.too_big"))
+        assertTrue(targets[0].navigationElement !is TranslationKeyUsageTarget)
     }
 
     fun testGotoDoesNotDuplicateAcrossMultipleUsages() {
