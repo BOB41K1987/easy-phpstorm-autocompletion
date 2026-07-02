@@ -55,13 +55,68 @@ class TranslationKeyUsagesTest : BasePlatformTestCase() {
             .getGotoDeclarationTargets(element, myFixture.caretOffset, myFixture.editor)
 
         assertNotNull("expected a goto target", targets)
-        assertTrue(targets!!.isNotEmpty())
+        assertEquals("expected exactly one target, got duplicates", 1, targets!!.size)
         assertTrue(targets[0].containingFile.name == "Dto.php")
 
         val presentation = targets[0] as ItemPresentation
         assertEquals("Dto.php:5", presentation.presentableText)
         assertEquals("src", presentation.locationString)
         assertSame(PluginIcons.EONX, presentation.getIcon(false))
+    }
+
+    fun testGotoDoesNotDuplicateAcrossMultipleUsages() {
+        myFixture.addFileToProject("support.php", support)
+        myFixture.addFileToProject(
+            "src/DtoOne.php",
+            """
+                <?php
+                namespace App\Dto;
+                use Symfony\Component\Validator\Constraints as Assert;
+                class DtoOne {
+                    #[Assert\Expression(message: 'dispute.incorrect_amount.too_big')]
+                    public int ${'$'}amount = 0;
+                }
+            """.trimIndent(),
+        )
+        myFixture.addFileToProject(
+            "src/DtoTwo.php",
+            """
+                <?php
+                namespace App\Dto;
+                use Symfony\Component\Validator\Constraints as Assert;
+                class DtoTwo {
+                    #[Assert\Expression(message: 'dispute.incorrect_amount.too_big')]
+                    public int ${'$'}amount = 0;
+                }
+            """.trimIndent(),
+        )
+
+        val translations = myFixture.addFileToProject(
+            "translations/validators+intl-icu.en.php",
+            """
+                <?php
+                return [
+                    'dispute' => [
+                        'incorrect_amount' => [
+                            'too_big' => 'Amount is too big.',
+                        ],
+                    ],
+                ];
+            """.trimIndent(),
+        )
+        myFixture.configureFromExistingVirtualFile(translations.virtualFile)
+        myFixture.editor.caretModel.moveToOffset(translations.text.indexOf("too_big") + "too_big".length)
+
+        val element = myFixture.file.findElementAt(myFixture.caretOffset - 1)
+        val targets = TranslationKeyUsagesGotoHandler()
+            .getGotoDeclarationTargets(element, myFixture.caretOffset, myFixture.editor)
+
+        assertNotNull(targets)
+        assertEquals(
+            "expected one target per usage file, not duplicated",
+            listOf("DtoOne.php", "DtoTwo.php"),
+            targets!!.map { it.containingFile.name },
+        )
     }
 
     fun testGotoNotOfferedForUnusedKey() {

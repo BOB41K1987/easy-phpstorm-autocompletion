@@ -44,6 +44,7 @@ class TranslationKeyUsagesGotoHandler : GotoDeclarationHandler {
         )
 
         return targets
+            .distinctBy { it.containingFile to it.textOffset }
             .sortedWith(compareBy({ it.containingFile.name }, { it.textOffset }))
             .map { TranslationKeyUsageTarget(it) as PsiElement }
             .takeIf { it.isNotEmpty() }
