@@ -17,6 +17,12 @@ class TranslationKeyUsagesTest : BasePlatformTestCase() {
             class Expression extends \Symfony\Component\Validator\Constraint {
                 public function __construct(public ?string ${'$'}expression = null, public ?string ${'$'}message = null) {}
             }
+            class When extends \Symfony\Component\Validator\Constraint {
+                public function __construct(public ?string ${'$'}expression = null, public ?array ${'$'}constraints = null) {}
+            }
+            class Sequentially extends \Symfony\Component\Validator\Constraint {
+                public function __construct(public ?array ${'$'}constraints = null) {}
+            }
         }
     """.trimIndent()
 
@@ -125,6 +131,60 @@ class TranslationKeyUsagesTest : BasePlatformTestCase() {
             listOf("DtoOne.php", "DtoTwo.php"),
             targets!!.map { it.containingFile.name },
         )
+    }
+
+    fun testGotoNavigatesToUsageInsideSequentiallyConstraint() {
+        myFixture.addFileToProject("support.php", support)
+        myFixture.addFileToProject(
+            "src/Dto.php",
+            """
+                <?php
+                namespace App\Dto;
+                use Symfony\Component\Validator\Constraints as Assert;
+                class Dto {
+                    #[Assert\When(
+                        expression: 'value !== null',
+                        constraints: [
+                            new Assert\Sequentially(
+                                constraints: [
+                                    new Assert\Expression(
+                                        expression: 'value.isActive()',
+                                        message: 'recurring_payment.creation.payment_method.not_active',
+                                    ),
+                                ],
+                            ),
+                        ],
+                    )]
+                    public ?int ${'$'}amount = null;
+                }
+            """.trimIndent(),
+        )
+
+        val translations = myFixture.addFileToProject(
+            "translations/validators+intl-icu.en.php",
+            """
+                <?php
+                return [
+                    'recurring_payment' => [
+                        'creation' => [
+                            'payment_method' => [
+                                'not_active' => 'This payment method must be active.',
+                            ],
+                        ],
+                    ],
+                ];
+            """.trimIndent(),
+        )
+        myFixture.configureFromExistingVirtualFile(translations.virtualFile)
+        myFixture.editor.caretModel.moveToOffset(translations.text.indexOf("not_active") + "not_active".length)
+
+        val element = myFixture.file.findElementAt(myFixture.caretOffset - 1)
+        val targets = TranslationKeyUsagesGotoHandler()
+            .getGotoDeclarationTargets(element, myFixture.caretOffset, myFixture.editor)
+
+        assertNotNull("expected a goto target", targets)
+        assertEquals(1, targets!!.size)
+        assertEquals("Dto.php", targets[0].containingFile.name)
     }
 
     fun testGotoNavigatesFromMessagesKeyToExceptionConstructor() {

@@ -2,6 +2,7 @@ package com.eonx.eeh.translationnav
 
 import com.intellij.psi.PsiElement
 import com.jetbrains.php.PhpIndex
+import com.jetbrains.php.lang.psi.elements.NewExpression
 import com.jetbrains.php.lang.psi.elements.ParameterList
 import com.jetbrains.php.lang.psi.elements.PhpAttribute
 import com.jetbrains.php.lang.psi.elements.PhpClass
@@ -28,6 +29,25 @@ object ConstraintMessageContext {
         if (!argumentName.lowercase().endsWith("message")) return false
 
         return isConstraintAttribute(attribute)
+    }
+
+    /**
+     * Same as [isConstraintMessageArgument] but also matches `new Assert\X(message: '<caret>')`
+     * constructor calls, e.g. constraints nested inside `Assert\Sequentially`/`Assert\When`'s
+     * `constraints: [...]` array, which aren't attributes themselves. The bundled Symfony plugin
+     * already resolves those forward, but doesn't offer a reverse (usages) direction, so the
+     * reverse Go to Declaration needs to recognize this shape itself.
+     */
+    fun isConstraintMessageUsage(literal: StringLiteralExpression): Boolean {
+        val parameterList = literal.parent as? ParameterList ?: return false
+        val argumentName = namedArgumentName(literal) ?: return false
+        if (!argumentName.lowercase().endsWith("message")) return false
+
+        return when (val call = parameterList.parent) {
+            is PhpAttribute -> isConstraintAttribute(call)
+            is NewExpression -> PhpEntityUtil.resolveClasses(call, call.project).any { isConstraintClass(it) }
+            else -> false
+        }
     }
 
     /** The name of the named argument [literal] is the value of, or null when positional. */

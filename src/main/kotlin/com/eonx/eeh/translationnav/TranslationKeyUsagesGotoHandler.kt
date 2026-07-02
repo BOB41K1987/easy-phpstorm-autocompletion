@@ -55,7 +55,7 @@ class TranslationKeyUsagesGotoHandler : GotoDeclarationHandler {
 
     private fun matches(literal: StringLiteralExpression, domain: String): Boolean = when (domain) {
         "messages" -> MessageKeyContext.requiredPrefix(literal)?.let { literal.contents.startsWith(it) } == true
-        ConstraintMessageContext.DOMAIN -> ConstraintMessageContext.isConstraintMessageArgument(literal)
+        ConstraintMessageContext.DOMAIN -> ConstraintMessageContext.isConstraintMessageUsage(literal)
         else -> false
     }
 }
