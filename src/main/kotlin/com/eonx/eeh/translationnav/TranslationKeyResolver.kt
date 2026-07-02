@@ -143,7 +143,8 @@ object TranslationKeyResolver {
      */
     fun keyAt(element: PsiElement): Pair<String, String>? {
         val literal = element.parent as? StringLiteralExpression ?: return null
-        val hash = literal.parent as? ArrayHashElement ?: return null
+        // The key element is wrapped in an intermediate PSI node, so walk up to the hash element.
+        val hash = PsiTreeUtil.getParentOfType(literal, ArrayHashElement::class.java) ?: return null
         if (hash.key !== literal || hash.value is ArrayCreationExpression) return null
 
         val file = literal.containingFile?.virtualFile ?: return null
@@ -153,7 +154,9 @@ object TranslationKeyResolver {
         val segments = mutableListOf(keyText(hash) ?: return null)
         var array = PsiTreeUtil.getParentOfType(hash, ArrayCreationExpression::class.java)
         while (array != null) {
-            val parentHash = array.parent as? ArrayHashElement ?: break
+            // Same intermediate-node quirk as the leaf key: walk up to the enclosing hash element.
+            val parentHash = PsiTreeUtil.getParentOfType(array, ArrayHashElement::class.java) ?: break
+            if (parentHash.value !== array) break
             segments.add(0, keyText(parentHash) ?: return null)
             array = PsiTreeUtil.getParentOfType(parentHash, ArrayCreationExpression::class.java)
         }
