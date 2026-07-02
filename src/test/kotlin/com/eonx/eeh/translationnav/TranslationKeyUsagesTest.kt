@@ -1,6 +1,7 @@
 package com.eonx.eeh.translationnav
 
 import com.intellij.navigation.ItemPresentation
+import com.intellij.navigation.NavigationItem
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 /**
@@ -64,6 +65,10 @@ class TranslationKeyUsagesTest : BasePlatformTestCase() {
         assertNotNull("expected a goto target", targets)
         assertEquals("expected exactly one target, got duplicates", 1, targets!!.size)
         assertTrue(targets[0].containingFile.name == "Dto.php")
+
+        // Platform utilities (hover, quick-doc, popup rendering) gate on this before using
+        // getPresentation() at all — without it they fall back to a generic element dump.
+        assertTrue(targets[0] is NavigationItem)
 
         val presentation = targets[0] as ItemPresentation
         assertEquals("Dto.php:5", presentation.presentableText)
