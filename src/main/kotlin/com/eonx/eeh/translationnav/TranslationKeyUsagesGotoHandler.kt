@@ -12,9 +12,14 @@ import com.jetbrains.php.lang.psi.elements.StringLiteralExpression
 /**
  * Go to Declaration from a translation key's definition in `translations/messages*.php` /
  * `translations/validators*.php` to every place in the project that references it — the reverse
- * of [ExceptionTranslationKeyGotoHandler] / [ConstraintMessageGotoHandler]. Covers `exceptions.*`
- * / `user_messages.*` keys used in exception constructors, `parent::__construct`, and
- * `setUserMessage()` calls, as well as `validators.*` keys used in constraint attributes.
+ * of [ExceptionTranslationKeyGotoHandler] / [ConstraintMessageGotoHandler].
+ *
+ * `messages.*` keys show up in too many shapes to enumerate syntactically (exception
+ * constructors, `setUserMessage()`, `$translator->trans()`, `buildViolation()`, class constants,
+ * …), so any string literal with the exact key text counts as a usage there. `validators.*` keys
+ * stay narrowed to actual constraint `message` arguments via [ConstraintMessageContext], since
+ * that shape is well-defined and narrowing avoids matching an unrelated string that happens to
+ * equal the key.
  */
 class TranslationKeyUsagesGotoHandler : GotoDeclarationHandler {
 
@@ -53,9 +58,15 @@ class TranslationKeyUsagesGotoHandler : GotoDeclarationHandler {
             ?.toTypedArray()
     }
 
-    private fun matches(literal: StringLiteralExpression, domain: String): Boolean = when (domain) {
-        "messages" -> MessageKeyContext.requiredPrefix(literal)?.let { literal.contents.startsWith(it) } == true
-        ConstraintMessageContext.DOMAIN -> ConstraintMessageContext.isConstraintMessageUsage(literal)
-        else -> false
+    private fun matches(literal: StringLiteralExpression, domain: String): Boolean {
+        // Exclude the key's own definition site (and any coincidentally equal value) so a
+        // translation file never shows up as a "usage" of its own key.
+        if (literal.containingFile?.virtualFile?.parent?.name == "translations") return false
+
+        return when (domain) {
+            "messages" -> true
+            ConstraintMessageContext.DOMAIN -> ConstraintMessageContext.isConstraintMessageUsage(literal)
+            else -> false
+        }
     }
 }

@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>com.eonx.eeh.translation-nav</id>
     <name>EasyErrorHandler Translation Navigation</name>
-    <version>1.15.1</version>
+    <version>1.16.0</version>
     <vendor>EonX</vendor>
 
     <description><![CDATA[

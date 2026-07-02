@@ -331,6 +331,149 @@ class TranslationKeyUsagesTest : BasePlatformTestCase() {
         assertEquals("Service.php", targets[0].containingFile.name)
     }
 
+    fun testGotoNavigatesFromMessagesKeyToTranslatorTransCall() {
+        myFixture.addFileToProject(
+            "src/Service.php",
+            """
+                <?php
+                namespace App\Service;
+                use Symfony\Contracts\Translation\TranslatorInterface;
+                class Service {
+                    public function __construct(private TranslatorInterface ${'$'}translator) {}
+                    public function run(): string {
+                        return ${'$'}this->translator->trans('event_log.merchant_created.title');
+                    }
+                }
+            """.trimIndent(),
+        )
+
+        val translations = myFixture.addFileToProject(
+            "translations/messages+intl-icu.en.php",
+            """
+                <?php
+                return [
+                    'event_log' => [
+                        'merchant_created' => [
+                            'title' => 'Merchant created',
+                        ],
+                    ],
+                ];
+            """.trimIndent(),
+        )
+        myFixture.configureFromExistingVirtualFile(translations.virtualFile)
+        myFixture.editor.caretModel.moveToOffset(translations.text.indexOf("title") + "title".length)
+
+        val element = myFixture.file.findElementAt(myFixture.caretOffset - 1)
+        val targets = TranslationKeyUsagesGotoHandler()
+            .getGotoDeclarationTargets(element, myFixture.caretOffset, myFixture.editor)
+
+        assertNotNull("expected a goto target", targets)
+        assertEquals(1, targets!!.size)
+        assertEquals("Service.php", targets[0].containingFile.name)
+    }
+
+    fun testGotoNavigatesFromMessagesKeyToClassConstant() {
+        myFixture.addFileToProject(
+            "src/EmailBuilder.php",
+            """
+                <?php
+                namespace App\Mailer;
+                class EmailBuilder {
+                    private const string SUBJECT = 'mailer.reseller_admin.refund_payout_declined';
+                }
+            """.trimIndent(),
+        )
+
+        val translations = myFixture.addFileToProject(
+            "translations/messages+intl-icu.en.php",
+            """
+                <?php
+                return [
+                    'mailer' => [
+                        'reseller_admin' => [
+                            'refund_payout_declined' => 'Refund payout declined',
+                        ],
+                    ],
+                ];
+            """.trimIndent(),
+        )
+        myFixture.configureFromExistingVirtualFile(translations.virtualFile)
+        myFixture.editor.caretModel.moveToOffset(
+            translations.text.indexOf("refund_payout_declined") + "refund_payout_declined".length,
+        )
+
+        val element = myFixture.file.findElementAt(myFixture.caretOffset - 1)
+        val targets = TranslationKeyUsagesGotoHandler()
+            .getGotoDeclarationTargets(element, myFixture.caretOffset, myFixture.editor)
+
+        assertNotNull("expected a goto target", targets)
+        assertEquals(1, targets!!.size)
+        assertEquals("EmailBuilder.php", targets[0].containingFile.name)
+    }
+
+    fun testGotoNavigatesFromMessagesKeyToBuildViolationCall() {
+        myFixture.addFileToProject(
+            "src/DisputeValidator.php",
+            """
+                <?php
+                namespace App\Validator;
+                class DisputeValidator {
+                    public function validate(${'$'}context): void {
+                        ${'$'}context->buildViolation('dispute.description_cannot_be_decoded')->addViolation();
+                    }
+                }
+            """.trimIndent(),
+        )
+
+        val translations = myFixture.addFileToProject(
+            "translations/messages+intl-icu.en.php",
+            """
+                <?php
+                return [
+                    'dispute' => [
+                        'description_cannot_be_decoded' => 'The value cannot be decoded.',
+                    ],
+                ];
+            """.trimIndent(),
+        )
+        myFixture.configureFromExistingVirtualFile(translations.virtualFile)
+        myFixture.editor.caretModel.moveToOffset(
+            translations.text.indexOf("description_cannot_be_decoded") + "description_cannot_be_decoded".length,
+        )
+
+        val element = myFixture.file.findElementAt(myFixture.caretOffset - 1)
+        val targets = TranslationKeyUsagesGotoHandler()
+            .getGotoDeclarationTargets(element, myFixture.caretOffset, myFixture.editor)
+
+        assertNotNull("expected a goto target", targets)
+        assertEquals(1, targets!!.size)
+        assertEquals("DisputeValidator.php", targets[0].containingFile.name)
+    }
+
+    fun testGotoDoesNotTreatOwnDefinitionAsUsage() {
+        val translations = myFixture.addFileToProject(
+            "translations/messages+intl-icu.en.php",
+            """
+                <?php
+                return [
+                    'dispute' => [
+                        'description_cannot_be_decoded' => 'The value cannot be decoded.',
+                    ],
+                ];
+            """.trimIndent(),
+        )
+        myFixture.configureFromExistingVirtualFile(translations.virtualFile)
+        myFixture.editor.caretModel.moveToOffset(
+            translations.text.indexOf("description_cannot_be_decoded") + "description_cannot_be_decoded".length,
+        )
+
+        val element = myFixture.file.findElementAt(myFixture.caretOffset - 1)
+        val targets = TranslationKeyUsagesGotoHandler()
+            .getGotoDeclarationTargets(element, myFixture.caretOffset, myFixture.editor)
+
+        assertNull(targets)
+    }
+
     fun testGotoNotOfferedForUnusedKey() {
         val translations = myFixture.addFileToProject(
             "translations/validators+intl-icu.en.php",
