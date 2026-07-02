@@ -58,8 +58,9 @@ class TranslationKeyUsagesTest : BasePlatformTestCase() {
         assertTrue(targets!!.isNotEmpty())
         assertTrue(targets[0].containingFile.name == "Dto.php")
 
-        val presentation = (targets[0] as ItemPresentation).presentableText
-        assertEquals("Dto.php:5", presentation)
+        val presentation = targets[0] as ItemPresentation
+        assertEquals("Dto.php:5", presentation.presentableText)
+        assertEquals("src", presentation.locationString)
     }
 
     fun testGotoNotOfferedForUnusedKey() {

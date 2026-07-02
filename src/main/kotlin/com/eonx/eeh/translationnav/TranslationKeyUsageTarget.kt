@@ -1,6 +1,8 @@
 package com.eonx.eeh.translationnav
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -30,7 +32,13 @@ class TranslationKeyUsageTarget(private val target: PsiElement) : FakePsiElement
         return if (line != null) "${file.name}:$line" else file.name
     }
 
-    override fun getLocationString(): String? = target.containingFile.virtualFile?.parent?.path
+    override fun getLocationString(): String? {
+        val dir = target.containingFile.virtualFile?.parent ?: return null
+        val root = ProjectRootManager.getInstance(target.project).contentRoots
+            .firstOrNull { VfsUtilCore.isAncestor(it, dir, false) }
+            ?: return dir.path
+        return VfsUtilCore.getRelativePath(dir, root)?.ifEmpty { null }
+    }
 
     override fun equals(other: Any?): Boolean = other is TranslationKeyUsageTarget && other.target == target
 
