@@ -61,6 +61,7 @@ class TranslationKeyUsagesTest : BasePlatformTestCase() {
         val presentation = targets[0] as ItemPresentation
         assertEquals("Dto.php:5", presentation.presentableText)
         assertEquals("src", presentation.locationString)
+        assertSame(PluginIcons.EONX, presentation.getIcon(false))
     }
 
     fun testGotoNotOfferedForUnusedKey() {

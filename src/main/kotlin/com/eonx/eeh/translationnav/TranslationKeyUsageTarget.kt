@@ -7,6 +7,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.FakePsiElement
+import javax.swing.Icon
 
 /**
  * Wraps a translation-key usage so the reverse Go to Declaration popup (multiple usage sites of
@@ -39,6 +40,8 @@ class TranslationKeyUsageTarget(private val target: PsiElement) : FakePsiElement
             ?: return dir.path
         return VfsUtilCore.getRelativePath(dir, root)?.ifEmpty { null }
     }
+
+    override fun getIcon(open: Boolean): Icon = PluginIcons.EONX
 
     override fun equals(other: Any?): Boolean = other is TranslationKeyUsageTarget && other.target == target
 
