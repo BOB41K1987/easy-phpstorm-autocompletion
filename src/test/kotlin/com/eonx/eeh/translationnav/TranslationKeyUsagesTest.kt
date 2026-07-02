@@ -4,8 +4,9 @@ import com.intellij.navigation.ItemPresentation
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 /**
- * Reverse Go to Declaration: from a key defined in `translations/validators*.php` to every
- * constraint attribute `message` argument that references it.
+ * Reverse Go to Declaration: from a key defined in `translations/validators*.php` /
+ * `translations/messages*.php` to every place that references it — constraint attribute
+ * `message` arguments, exception constructor/`parent::__construct` calls, and `setUserMessage`.
  */
 class TranslationKeyUsagesTest : BasePlatformTestCase() {
 
@@ -124,6 +125,145 @@ class TranslationKeyUsagesTest : BasePlatformTestCase() {
             listOf("DtoOne.php", "DtoTwo.php"),
             targets!!.map { it.containingFile.name },
         )
+    }
+
+    fun testGotoNavigatesFromMessagesKeyToExceptionConstructor() {
+        myFixture.addFileToProject(
+            "src/SomeException.php",
+            """
+                <?php
+                namespace App\Exception;
+                class SomeException extends \Exception {}
+            """.trimIndent(),
+        )
+        myFixture.addFileToProject(
+            "src/Service.php",
+            """
+                <?php
+                namespace App\Service;
+                use App\Exception\SomeException;
+                class Service {
+                    public function run(): void {
+                        throw new SomeException('exceptions.foo');
+                    }
+                }
+            """.trimIndent(),
+        )
+
+        val translations = myFixture.addFileToProject(
+            "translations/messages+intl-icu.en.php",
+            """
+                <?php
+                return [
+                    'exceptions' => [
+                        'foo' => 'Something went wrong.',
+                    ],
+                ];
+            """.trimIndent(),
+        )
+        myFixture.configureFromExistingVirtualFile(translations.virtualFile)
+        myFixture.editor.caretModel.moveToOffset(translations.text.indexOf("foo") + "foo".length)
+
+        val element = myFixture.file.findElementAt(myFixture.caretOffset - 1)
+        val targets = TranslationKeyUsagesGotoHandler()
+            .getGotoDeclarationTargets(element, myFixture.caretOffset, myFixture.editor)
+
+        assertNotNull("expected a goto target", targets)
+        assertEquals(1, targets!!.size)
+        assertEquals("Service.php", targets[0].containingFile.name)
+    }
+
+    fun testGotoNavigatesFromMessagesKeyToParentConstructCall() {
+        myFixture.addFileToProject(
+            "src/BaseException.php",
+            """
+                <?php
+                namespace App\Exception;
+                class BaseException extends \Exception {}
+            """.trimIndent(),
+        )
+        myFixture.addFileToProject(
+            "src/SomeException.php",
+            """
+                <?php
+                namespace App\Exception;
+                class SomeException extends BaseException {
+                    public function __construct() {
+                        parent::__construct('exceptions.baz');
+                    }
+                }
+            """.trimIndent(),
+        )
+
+        val translations = myFixture.addFileToProject(
+            "translations/messages+intl-icu.en.php",
+            """
+                <?php
+                return [
+                    'exceptions' => [
+                        'baz' => 'Something went wrong.',
+                    ],
+                ];
+            """.trimIndent(),
+        )
+        myFixture.configureFromExistingVirtualFile(translations.virtualFile)
+        myFixture.editor.caretModel.moveToOffset(translations.text.indexOf("baz") + "baz".length)
+
+        val element = myFixture.file.findElementAt(myFixture.caretOffset - 1)
+        val targets = TranslationKeyUsagesGotoHandler()
+            .getGotoDeclarationTargets(element, myFixture.caretOffset, myFixture.editor)
+
+        assertNotNull("expected a goto target", targets)
+        assertEquals(1, targets!!.size)
+        assertEquals("SomeException.php", targets[0].containingFile.name)
+    }
+
+    fun testGotoNavigatesFromMessagesKeyToSetUserMessageCall() {
+        myFixture.addFileToProject(
+            "src/SomeException.php",
+            """
+                <?php
+                namespace App\Exception;
+                class SomeException extends \Exception {
+                    public function setUserMessage(string ${'$'}key): static { return ${'$'}this; }
+                }
+            """.trimIndent(),
+        )
+        myFixture.addFileToProject(
+            "src/Service.php",
+            """
+                <?php
+                namespace App\Service;
+                use App\Exception\SomeException;
+                class Service {
+                    public function run(): void {
+                        throw (new SomeException())->setUserMessage('user_messages.bar');
+                    }
+                }
+            """.trimIndent(),
+        )
+
+        val translations = myFixture.addFileToProject(
+            "translations/messages+intl-icu.en.php",
+            """
+                <?php
+                return [
+                    'user_messages' => [
+                        'bar' => 'Please try again.',
+                    ],
+                ];
+            """.trimIndent(),
+        )
+        myFixture.configureFromExistingVirtualFile(translations.virtualFile)
+        myFixture.editor.caretModel.moveToOffset(translations.text.indexOf("bar") + "bar".length)
+
+        val element = myFixture.file.findElementAt(myFixture.caretOffset - 1)
+        val targets = TranslationKeyUsagesGotoHandler()
+            .getGotoDeclarationTargets(element, myFixture.caretOffset, myFixture.editor)
+
+        assertNotNull("expected a goto target", targets)
+        assertEquals(1, targets!!.size)
+        assertEquals("Service.php", targets[0].containingFile.name)
     }
 
     fun testGotoNotOfferedForUnusedKey() {

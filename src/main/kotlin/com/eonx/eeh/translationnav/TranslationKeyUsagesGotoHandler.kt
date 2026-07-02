@@ -12,7 +12,9 @@ import com.jetbrains.php.lang.psi.elements.StringLiteralExpression
 /**
  * Go to Declaration from a translation key's definition in `translations/messages*.php` /
  * `translations/validators*.php` to every place in the project that references it — the reverse
- * of [ExceptionTranslationKeyGotoHandler] / [ConstraintMessageGotoHandler].
+ * of [ExceptionTranslationKeyGotoHandler] / [ConstraintMessageGotoHandler]. Covers `exceptions.*`
+ * / `user_messages.*` keys used in exception constructors, `parent::__construct`, and
+ * `setUserMessage()` calls, as well as `validators.*` keys used in constraint attributes.
  */
 class TranslationKeyUsagesGotoHandler : GotoDeclarationHandler {
 
