@@ -26,7 +26,7 @@ class TranslationKeyUsagesGotoHandler : GotoDeclarationHandler {
         val word = key.substringAfterLast(".")
         if (word.isBlank()) return null
 
-        val targets = mutableListOf<PsiElement>()
+        val targets = mutableListOf<StringLiteralExpression>()
         val scope = GlobalSearchScope.projectScope(element.project)
 
         PsiSearchHelper.getInstance(element.project).processElementsWithWord(
@@ -43,7 +43,11 @@ class TranslationKeyUsagesGotoHandler : GotoDeclarationHandler {
             true,
         )
 
-        return targets.takeIf { it.isNotEmpty() }?.toTypedArray()
+        return targets
+            .sortedWith(compareBy({ it.containingFile.name }, { it.textOffset }))
+            .map { TranslationKeyUsageTarget(it) as PsiElement }
+            .takeIf { it.isNotEmpty() }
+            ?.toTypedArray()
     }
 
     private fun matches(literal: StringLiteralExpression, domain: String): Boolean = when (domain) {

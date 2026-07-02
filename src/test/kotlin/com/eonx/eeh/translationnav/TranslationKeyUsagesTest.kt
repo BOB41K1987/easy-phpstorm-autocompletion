@@ -1,5 +1,6 @@
 package com.eonx.eeh.translationnav
 
+import com.intellij.navigation.ItemPresentation
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 /**
@@ -56,6 +57,9 @@ class TranslationKeyUsagesTest : BasePlatformTestCase() {
         assertNotNull("expected a goto target", targets)
         assertTrue(targets!!.isNotEmpty())
         assertTrue(targets[0].containingFile.name == "Dto.php")
+
+        val presentation = (targets[0] as ItemPresentation).presentableText
+        assertEquals("Dto.php:5", presentation)
     }
 
     fun testGotoNotOfferedForUnusedKey() {
